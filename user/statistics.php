@@ -16,16 +16,6 @@ $pdo = getDBConnection();
 $today = get_today_date();
 
 // 1. Core Summary Counts
-$totalHabitsCount = (int)$pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = :user_id")->execute(['user_id' => $userId]) ? $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = :user_id")->execute(['user_id' => $userId]) : 0;
-
-$stmtTotal = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = :user_id");
-$stmtTotal->execute(['user_id' => $userId]);
-$totalHabits = (int)$stmtTotal->fetchColumn();
-
-$stmtActive = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = :user_id AND status = 'active'");
-$stmtActive->execute(['user_id' => $userId]);
-$activeHabitsCount = (int)$stmtActive->fetchColumn();
-
 $stmtCompletions = $pdo->prepare("
     SELECT COUNT(hc.id)
     FROM habit_completions hc
@@ -50,7 +40,21 @@ $streaks = calculate_streaks($allCompletionDates);
 $currentStreak = $streaks['current_streak'];
 $longestStreak = $streaks['longest_streak'];
 
-// 3. Last 7 Days (Weekly) Breakdown
+// 3. Completion Rate: share of the last 30 days with at least one completion
+$completionRate = 0;
+if (!empty($allCompletionDates)) {
+    $monthStart = date('Y-m-d', strtotime('-29 days'));
+    $daysActive = 0;
+    foreach ($allCompletionDates as $date) {
+        if ($date < $monthStart) {
+            break; // dates are sorted newest first
+        }
+        $daysActive++;
+    }
+    $completionRate = (int)round(($daysActive / 30) * 100);
+}
+
+// 4. Last 7 Days (Weekly) Breakdown
 $weeklyData = [];
 for ($i = 6; $i >= 0; $i--) {
     $dateKey = date('Y-m-d', strtotime("-$i days"));
@@ -74,7 +78,7 @@ for ($i = 6; $i >= 0; $i--) {
 
 $last7DaysTotal = array_sum(array_column($weeklyData, 'count'));
 
-// 4. Last 30 Days (Monthly) Total
+// 5. Last 30 Days (Monthly) Total
 $stmtMonth = $pdo->prepare("
     SELECT COUNT(hc.id)
     FROM habit_completions hc
@@ -84,7 +88,7 @@ $stmtMonth = $pdo->prepare("
 $stmtMonth->execute(['user_id' => $userId]);
 $last30DaysTotal = (int)$stmtMonth->fetchColumn();
 
-// 5. Best-Performing Habit
+// 6. Best-Performing Habit
 $stmtBest = $pdo->prepare("
     SELECT h.id, h.name, c.name AS category_name, COUNT(hc.id) AS completion_count
     FROM habits h
@@ -98,7 +102,7 @@ $stmtBest = $pdo->prepare("
 $stmtBest->execute(['user_id' => $userId]);
 $bestHabit = $stmtBest->fetch();
 
-// 6. Habit Completion Breakdown List
+// 7. Habit Completion Breakdown List
 $stmtHabitBreakdown = $pdo->prepare("
     SELECT h.id, h.name, h.frequency, c.name AS category_name, COUNT(hc.id) AS completion_count
     FROM habits h
@@ -134,7 +138,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <div class="stat-card">
         <div class="stat-icon warning"><?= icon('flame', 20) ?></div>
         <div>
-          <div class="stat-value"><?= $currentStreak ?> Days</div>
+          <div class="stat-value"><?= $currentStreak ?> Day<?= $currentStreak === 1 ? '' : 's' ?></div>
           <div class="stat-label">Current Streak</div>
         </div>
       </div>
@@ -142,7 +146,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <div class="stat-card">
         <div class="stat-icon success"><?= icon('trophy', 20) ?></div>
         <div>
-          <div class="stat-value"><?= $longestStreak ?> Days</div>
+          <div class="stat-value"><?= $longestStreak ?> Day<?= $longestStreak === 1 ? '' : 's' ?></div>
           <div class="stat-label">Longest Streak</div>
         </div>
       </div>
@@ -156,10 +160,10 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon primary"><?= icon('target', 20) ?></div>
+        <div class="stat-icon primary"><?= icon('trending', 20) ?></div>
         <div>
-          <div class="stat-value"><?= $activeHabitsCount ?> / <?= $totalHabits ?></div>
-          <div class="stat-label">Active Habits</div>
+          <div class="stat-value"><?= $completionRate ?>%</div>
+          <div class="stat-label">30-Day Completion Rate</div>
         </div>
       </div>
     </div>
@@ -176,7 +180,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             <div>
               <div class="highlight-name"><?= e($bestHabit['name']) ?></div>
               <div class="highlight-meta">Category: <strong><?= e($bestHabit['category_name']) ?></strong></div>
-              <div class="highlight-count"><?= icon('check', 14) ?> <?= (int)$bestHabit['completion_count'] ?> Total Completions</div>
+              <div class="highlight-count"><?= icon('check', 14) ?> <?= (int)$bestHabit['completion_count'] ?> Total Completion<?= (int)$bestHabit['completion_count'] === 1 ? '' : 's' ?></div>
             </div>
           </div>
         <?php else: ?>
@@ -219,7 +223,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <div class="weekly-chart">
         <?php foreach ($weeklyData as $day): ?>
           <div class="weekly-column">
-            <span class="weekly-value"><?= $day['count'] > 0 ? $day['count'] : '' ?></span>
+            <span class="weekly-value<?= $day['count'] > 0 ? '' : ' is-zero' ?>"><?= $day['count'] ?></span>
             <div class="weekly-bar<?= $day['count'] > 0 ? '' : ' is-empty' ?>">
               <?php if ($day['count'] > 0): ?>
                 <div class="weekly-bar-fill" style="height: <?= round(($day['count'] / $maxCount) * 100) ?>%;"></div>
@@ -254,7 +258,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                   <td><strong><?= e($h['name']) ?></strong></td>
                   <td><span class="badge badge-primary"><?= e($h['category_name']) ?></span></td>
                   <td><?= ucfirst(e($h['frequency'])) ?></td>
-                  <td><strong><?= (int)$h['completion_count'] ?></strong> completions</td>
+                  <td><strong><?= (int)$h['completion_count'] ?></strong> completion<?= (int)$h['completion_count'] === 1 ? '' : 's' ?></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
