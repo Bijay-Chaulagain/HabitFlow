@@ -1,0 +1,54 @@
+/* ==========================================================================
+   RESPONSIVE DESIGN & MOBILE BREAKPOINTS
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    position: relative;
+  }
+
+  .sidebar-menu {
+    display: flex;
+    overflow-x: auto;
+    padding: 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .sidebar-link {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.84375rem;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .habit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
