@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/icons.php';
 
 require_user();
 
@@ -91,86 +92,86 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <h1 class="page-title">Habit Calendar</h1>
         <p class="page-subtitle">Visual month-by-month history of your habit completion consistency.</p>
       </div>
-      
+
       <!-- Month Navigation Controls -->
-      <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <div class="page-actions">
         <a href="/habit_tracker/user/calendar.php?month=<?= $prevMonth ?>&year=<?= $prevYear ?>" class="btn btn-outline btn-sm">
-          &laquo; Prev Month
+          <?= icon('arrow-left', 16) ?> Prev Month
         </a>
         <a href="/habit_tracker/user/calendar.php?month=<?= $currentMonth ?>&year=<?= $currentYear ?>" class="btn btn-outline btn-sm">
           Today
         </a>
         <a href="/habit_tracker/user/calendar.php?month=<?= $nextMonth ?>&year=<?= $nextYear ?>" class="btn btn-outline btn-sm">
-          Next Month &raquo;
+          Next Month <?= icon('arrow-right', 16) ?>
         </a>
       </div>
     </div>
 
     <?php display_flash_message(); ?>
 
-    <div class="card">
-      <div style="text-align: center; margin-bottom: 1.5rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--primary);"><?= e($monthName) ?></h2>
-      </div>
+    <div class="card calendar-card">
+      <h2 class="calendar-month"><?= e($monthName) ?></h2>
 
       <!-- Calendar Table Grid -->
       <div class="table-responsive">
-        <table class="table" style="border: 1px solid var(--border-color); table-layout: fixed;">
-          <thead>
-            <tr style="text-align: center;">
-              <th style="width: 14.28%; text-align: center;">Sun</th>
-              <th style="width: 14.28%; text-align: center;">Mon</th>
-              <th style="width: 14.28%; text-align: center;">Tue</th>
-              <th style="width: 14.28%; text-align: center;">Wed</th>
-              <th style="width: 14.28%; text-align: center;">Thu</th>
-              <th style="width: 14.28%; text-align: center;">Fri</th>
-              <th style="width: 14.28%; text-align: center;">Sat</th>
+        <table class="table calendar-table">
+          <thead class="calendar-weekdays">
+            <tr>
+              <th>Sun</th>
+              <th>Mon</th>
+              <th>Tue</th>
+              <th>Wed</th>
+              <th>Thu</th>
+              <th>Fri</th>
+              <th>Sat</th>
             </tr>
           </thead>
           <tbody>
             <?php
             $dayCounter = 1;
             $cellCounter = 0;
-            
+
             while ($dayCounter <= $daysInMonth) {
                 echo '<tr>';
                 for ($col = 0; $col < 7; $col++) {
                     if ($cellCounter < $startDayOfWeek || $dayCounter > $daysInMonth) {
-                        echo '<td style="background-color: var(--bg-main); min-height: 100px; vertical-align: top; padding: 0.5rem;"></td>';
+                        echo '<td class="calendar-day is-empty"></td>';
                     } else {
                         $dateStr = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $dayCounter);
                         $isToday = ($dateStr === $todayStr);
                         $dayCompletions = $completionsByDate[$dateStr] ?? [];
                         $count = count($dayCompletions);
-                        
-                        $bgColor = $isToday ? 'var(--primary-light)' : 'var(--bg-surface)';
-                        $borderStyle = $isToday ? '2px solid var(--primary)' : '1px solid var(--border-color)';
-                        
-                        echo '<td class="js-calendar-day" style="background-color: ' . $bgColor . '; border: ' . $borderStyle . '; min-height: 100px; height: 110px; vertical-align: top; padding: 0.625rem; position: relative; cursor: pointer;">';
-                        
-                        echo '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem;">';
-                        echo '<span style="font-weight: 700; font-size: 0.9375rem; color: ' . ($isToday ? 'var(--primary)' : 'var(--text-main)') . ';">' . $dayCounter . '</span>';
+
+                        $cellClass = 'calendar-day js-calendar-day'
+                            . ($isToday ? ' is-today' : '')
+                            . ($count > 0 ? ' has-completions' : '');
+
+                        echo '<td class="' . $cellClass . '">';
+
+                        echo '<div class="calendar-day-head">';
+                        echo '<span class="calendar-day-number">' . $dayCounter . '</span>';
                         if ($count > 0) {
-                            echo '<span class="badge badge-success" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">' . $count . ' Done</span>';
+                            echo '<span class="badge badge-success calendar-day-count">' . $count . ' Done</span>';
                         }
                         echo '</div>';
-                        
-                        // Small indicator badges for completed habits
+
+                        // Small indicator chips for completed habits
                         if ($count > 0) {
-                            echo '<div style="display: flex; flex-direction: column; gap: 0.25rem;">';
                             $shown = 0;
                             foreach ($dayCompletions as $h) {
                                 if ($shown < 2) {
-                                    echo '<div style="font-size: 0.71875rem; background: var(--success-light); color: var(--success); padding: 0.125rem 0.375rem; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">✓ ' . e($h['habit_name']) . '</div>';
+                                    echo '<div class="calendar-day-item">'
+                                        . icon('check', 10)
+                                        . '<span class="calendar-day-name">' . e($h['habit_name']) . '</span>'
+                                        . '</div>';
                                 }
                                 $shown++;
                             }
                             if ($count > 2) {
-                                echo '<div style="font-size: 0.6875rem; color: var(--text-muted);">+' . ($count - 2) . ' more...</div>';
+                                echo '<div class="calendar-day-more">+' . ($count - 2) . ' more</div>';
                             }
-                            echo '</div>';
                         }
-                        
+
                         echo '</td>';
                         $dayCounter++;
                     }

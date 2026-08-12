@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/icons.php';
 
 if (is_logged_in()) {
     $currentUser = get_logged_in_user();
@@ -29,25 +30,25 @@ if (is_logged_in()) {
 
   <div class="auth-wrapper">
     <div class="theme-toggle-auth">
-      <button type="button" class="btn-icon js-theme-toggle" aria-label="Toggle dark mode">🌙</button>
+      <button type="button" class="btn-icon js-theme-toggle" aria-label="Toggle dark mode"><?= icon('moon') ?></button>
     </div>
 
-    <div class="auth-card" style="max-width: 520px; text-align: center;">
+    <div class="auth-card auth-card-lg">
       <div class="auth-header">
-        <div class="auth-logo" style="font-size: 2rem; justify-content: center;">
-          ⚡ <span>Habit Tracker</span>
+        <div class="auth-logo">
+          <?= icon('logo', 22) ?> <span>Habit Tracker</span>
         </div>
-        <p class="auth-subtitle" style="font-size: 1.05rem; margin-top: 0.5rem;">
+        <p class="auth-subtitle auth-subtitle-lg">
           Build consistency, track daily streaks, and achieve your goals with ease.
         </p>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
-        <a href="/habit_tracker/register.php" class="btn btn-primary btn-full" style="padding: 0.875rem;">Get Started — Create Account</a>
-        <a href="/habit_tracker/login.php" class="btn btn-outline btn-full" style="padding: 0.875rem;">Existing User? Sign In</a>
+      <div class="auth-actions">
+        <a href="/habit_tracker/register.php" class="btn btn-primary btn-full btn-lg">Get Started — Create Account</a>
+        <a href="/habit_tracker/login.php" class="btn btn-outline btn-full btn-lg">Existing User? Sign In</a>
       </div>
 
-      <div class="auth-footer" style="margin-top: 2.5rem;">
+      <div class="auth-footer auth-footer-spaced">
         Habit Tracker &copy; <?= date('Y') ?> — College Web Application Project
       </div>
     </div>

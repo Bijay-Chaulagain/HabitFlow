@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/icons.php';
 
 require_user();
 
@@ -131,7 +132,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
     <!-- Summary Metrics -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon warning">🔥</div>
+        <div class="stat-icon warning"><?= icon('flame', 20) ?></div>
         <div>
           <div class="stat-value"><?= $currentStreak ?> Days</div>
           <div class="stat-label">Current Streak</div>
@@ -139,7 +140,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon success">🏆</div>
+        <div class="stat-icon success"><?= icon('trophy', 20) ?></div>
         <div>
           <div class="stat-value"><?= $longestStreak ?> Days</div>
           <div class="stat-label">Longest Streak</div>
@@ -147,7 +148,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon primary">✅</div>
+        <div class="stat-icon primary"><?= icon('check-circle', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalCompletions ?></div>
           <div class="stat-label">Total Completions</div>
@@ -155,7 +156,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon primary">🎯</div>
+        <div class="stat-icon primary"><?= icon('target', 20) ?></div>
         <div>
           <div class="stat-value"><?= $activeHabitsCount ?> / <?= $totalHabits ?></div>
           <div class="stat-label">Active Habits</div>
@@ -163,84 +164,79 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
     </div>
 
-    <!-- Highlights Section -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-      
-      <!-- Best Performing Habit Card -->
-      <div class="card" style="margin-bottom: 0;">
-        <h2 class="card-title">🌟 Best Performing Habit</h2>
+    <!-- Key Insights -->
+    <div class="insights-grid">
+
+      <!-- Best Performing Habit -->
+      <section class="card">
+        <h2 class="card-title">Best Performing Habit</h2>
         <?php if ($bestHabit && $bestHabit['completion_count'] > 0): ?>
-          <div style="padding: 1rem; border-radius: var(--border-radius-sm); background-color: var(--primary-light); border: 1px solid rgba(79, 70, 229, 0.2);">
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
-              <?= e($bestHabit['name']) ?>
-            </div>
-            <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
-              Category: <strong><?= e($bestHabit['category_name']) ?></strong>
-            </div>
-            <div style="margin-top: 0.75rem; font-size: 1rem; font-weight: 700; color: var(--text-main);">
-              🎉 <?= (int)$bestHabit['completion_count'] ?> Total Completions
+          <div class="highlight-item">
+            <div class="stat-icon success"><?= icon('trophy', 20) ?></div>
+            <div>
+              <div class="highlight-name"><?= e($bestHabit['name']) ?></div>
+              <div class="highlight-meta">Category: <strong><?= e($bestHabit['category_name']) ?></strong></div>
+              <div class="highlight-count"><?= icon('check', 14) ?> <?= (int)$bestHabit['completion_count'] ?> Total Completions</div>
             </div>
           </div>
         <?php else: ?>
-          <p style="color: var(--text-muted); font-size: 0.9375rem;">
-            No completion data available yet. Complete your habits to highlight your top performer!
-          </p>
+          <p class="text-muted-note">No completion data available yet. Complete your habits to highlight your top performer!</p>
         <?php endif; ?>
-      </div>
+      </section>
 
-      <!-- Monthly & Weekly Overview -->
-      <div class="card" style="margin-bottom: 0;">
-        <h2 class="card-title">📅 Period Summaries</h2>
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">
-            <div>
-              <div style="font-weight: 600;">Last 7 Days</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Weekly completions</div>
+      <!-- Weekly & Monthly Overview -->
+      <section class="card">
+        <h2 class="card-title">Period Summaries</h2>
+        <div class="period-list">
+          <div class="period-row">
+            <div class="period-info">
+              <div class="period-label">Last 7 Days</div>
+              <div class="period-sub">Weekly completions</div>
             </div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--success);"><?= $last7DaysTotal ?></div>
+            <div class="period-value is-green"><?= $last7DaysTotal ?></div>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">
-            <div>
-              <div style="font-weight: 600;">Last 30 Days</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Monthly completions</div>
+          <div class="period-row">
+            <div class="period-info">
+              <div class="period-label">Last 30 Days</div>
+              <div class="period-sub">Monthly completions</div>
             </div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);"><?= $last30DaysTotal ?></div>
+            <div class="period-value is-primary"><?= $last30DaysTotal ?></div>
           </div>
         </div>
-      </div>
+      </section>
 
     </div>
 
     <!-- Weekly Breakdown Bar Chart (Last 7 Days) -->
-    <div class="card">
-      <h2 class="card-title">📊 Last 7 Days Activity</h2>
-      
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; height: 180px; padding-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-        <?php 
-        $maxCount = max(1, max(array_column($weeklyData, 'count')));
-        foreach ($weeklyData as $day):
-          $barHeight = round(($day['count'] / $maxCount) * 120);
-        ?>
-          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem;">
-              <?= $day['count'] > 0 ? $day['count'] : '' ?>
+    <section class="card">
+      <h2 class="card-title">Last 7 Days Activity</h2>
+
+      <?php
+      $maxCount = max(1, max(array_column($weeklyData, 'count')));
+      ?>
+
+      <div class="weekly-chart">
+        <?php foreach ($weeklyData as $day): ?>
+          <div class="weekly-column">
+            <span class="weekly-value"><?= $day['count'] > 0 ? $day['count'] : '' ?></span>
+            <div class="weekly-bar<?= $day['count'] > 0 ? '' : ' is-empty' ?>">
+              <?php if ($day['count'] > 0): ?>
+                <div class="weekly-bar-fill" style="height: <?= round(($day['count'] / $maxCount) * 100) ?>%;"></div>
+              <?php endif; ?>
             </div>
-            <div style="width: 100%; max-width: 36px; height: <?= max(6, $barHeight) ?>px; background-color: <?= $day['count'] > 0 ? 'var(--primary)' : 'var(--border-color)' ?>; border-radius: 4px 4px 0 0; transition: var(--transition);"></div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
-              <?= e($day['label']) ?>
-            </div>
+            <span class="weekly-day"><?= e($day['label']) ?></span>
           </div>
         <?php endforeach; ?>
       </div>
-    </div>
+    </section>
 
     <!-- Per-Habit Completion Performance Table -->
-    <div class="card">
-      <h2 class="card-title">🎯 Individual Habit Performance</h2>
+    <section class="card">
+      <h2 class="card-title">Individual Habit Performance</h2>
 
       <?php if (empty($habitBreakdownList)): ?>
-        <p style="color: var(--text-muted);">No habits recorded yet.</p>
+        <p class="text-muted-note">No habits recorded yet.</p>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table">
@@ -265,7 +261,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
           </table>
         </div>
       <?php endif; ?>
-    </div>
+    </section>
 
   </div>
 </main>

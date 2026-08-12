@@ -5,8 +5,9 @@
  */
 
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/icons.php';
 
-// Redirect logged-in users to their dashboard
+// Redirect logged-in users to their respective dashboard
 if (is_logged_in()) {
     $currentUser = get_logged_in_user();
     if ($currentUser['role'] === 'admin') {
@@ -30,13 +31,13 @@ if (is_logged_in()) {
 
   <div class="auth-wrapper">
     <div class="theme-toggle-auth">
-      <button type="button" class="btn-icon js-theme-toggle" aria-label="Toggle dark mode">🌙</button>
+      <button type="button" class="btn-icon js-theme-toggle" aria-label="Toggle dark mode"><?= icon('moon') ?></button>
     </div>
 
     <div class="auth-card">
       <div class="auth-header">
         <div class="auth-logo">
-          ⚡ <span>Habit Tracker</span>
+          <?= icon('logo', 22) ?> <span>Habit Tracker</span>
         </div>
         <p class="auth-subtitle">Create an account to start tracking your habits</p>
       </div>

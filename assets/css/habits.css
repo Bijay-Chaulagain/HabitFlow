@@ -50,6 +50,7 @@
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.625rem;
   border-radius: 999px;
   font-size: 0.75rem;

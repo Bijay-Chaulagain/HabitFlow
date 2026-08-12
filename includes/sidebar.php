@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/icons.php';
 
 $user = get_logged_in_user();
 $currentRole = $user['role'] ?? 'user';
@@ -12,7 +13,7 @@ $currentScript = basename($_SERVER['SCRIPT_NAME']);
 ?>
 <aside class="app-sidebar">
   <div class="sidebar-brand">
-    ⚡ <span>Habit Tracker</span>
+    <?= icon('logo', 20) ?> <span>Habit Tracker</span>
   </div>
 
   <ul class="sidebar-menu">
@@ -20,66 +21,66 @@ $currentScript = basename($_SERVER['SCRIPT_NAME']);
       <!-- Admin Navigation Links -->
       <li class="sidebar-item">
         <a href="/habit_tracker/admin/dashboard.php" class="sidebar-link <?= $currentScript === 'dashboard.php' ? 'active' : '' ?>">
-          📊 Dashboard
+          <?= icon('home') ?> Dashboard
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/admin/users.php" class="sidebar-link <?= $currentScript === 'users.php' ? 'active' : '' ?>">
-          👥 Users Management
+          <?= icon('users') ?> Users Management
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/admin/habits.php" class="sidebar-link <?= $currentScript === 'habits.php' ? 'active' : '' ?>">
-          📝 System Habits
+          <?= icon('file') ?> System Habits
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/admin/categories.php" class="sidebar-link <?= $currentScript === 'categories.php' ? 'active' : '' ?>">
-          🏷️ Categories
+          <?= icon('tags') ?> Categories
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/admin/statistics.php" class="sidebar-link <?= $currentScript === 'statistics.php' ? 'active' : '' ?>">
-          📈 System Statistics
+          <?= icon('chart') ?> System Statistics
         </a>
       </li>
     <?php else: ?>
       <!-- Normal User Navigation Links -->
       <li class="sidebar-item">
         <a href="/habit_tracker/user/dashboard.php" class="sidebar-link <?= $currentScript === 'dashboard.php' ? 'active' : '' ?>">
-          🏠 Dashboard
+          <?= icon('home') ?> Dashboard
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/user/habits.php" class="sidebar-link <?= $currentScript === 'habits.php' ? 'active' : '' ?>">
-          🎯 My Habits
+          <?= icon('target') ?> My Habits
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/user/add-habit.php" class="sidebar-link <?= $currentScript === 'add-habit.php' ? 'active' : '' ?>">
-          ➕ Add Habit
+          <?= icon('plus') ?> Add Habit
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/user/calendar.php" class="sidebar-link <?= $currentScript === 'calendar.php' ? 'active' : '' ?>">
-          📅 Calendar
+          <?= icon('calendar') ?> Calendar
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/user/statistics.php" class="sidebar-link <?= $currentScript === 'statistics.php' ? 'active' : '' ?>">
-          📈 Statistics
+          <?= icon('chart') ?> Statistics
         </a>
       </li>
       <li class="sidebar-item">
         <a href="/habit_tracker/user/profile.php" class="sidebar-link <?= $currentScript === 'profile.php' ? 'active' : '' ?>">
-          👤 Profile Settings
+          <?= icon('user') ?> Profile Settings
         </a>
       </li>
     <?php endif; ?>
     
     <li class="sidebar-item" style="margin-top: 1.5rem;">
-      <a href="/habit_tracker/logout.php" class="sidebar-link" style="color: #ef4444;">
-        🚪 Logout
+      <a href="/habit_tracker/logout.php" class="sidebar-link sidebar-link-logout">
+        <?= icon('logout') ?> Logout
       </a>
     </li>
   </ul>

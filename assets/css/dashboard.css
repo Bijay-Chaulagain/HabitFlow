@@ -7,30 +7,35 @@
   min-height: 100vh;
 }
 
-/* Sidebar Styling */
+/* Sidebar Styling — subtle, low-contrast light surface */
 .app-sidebar {
   width: 260px;
   background-color: var(--bg-sidebar);
-  color: #94a3b8;
+  color: var(--text-muted);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
   transition: var(--transition);
 }
 
 .sidebar-brand {
-  padding: 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #ffffff;
+  padding: 1.25rem 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-brand span {
-  color: #818cf8;
+  color: var(--primary);
+}
+
+.sidebar-brand .icon {
+  color: var(--primary);
 }
 
 .sidebar-menu {
@@ -47,8 +52,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #94a3b8;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-muted);
   font-size: 0.9375rem;
   font-weight: 500;
   border-radius: var(--border-radius-sm);
@@ -57,20 +62,29 @@
 }
 
 .sidebar-link:hover, .sidebar-link.active {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  background-color: var(--hover-overlay);
   text-decoration: none;
 }
 
 .sidebar-link.active {
-  background-color: var(--primary);
+  background-color: var(--primary-light);
+  color: var(--secondary-text);
+}
+
+.sidebar-link-logout {
+  color: var(--danger);
+}
+.sidebar-link-logout:hover {
+  color: var(--danger);
+  background-color: var(--danger-light);
 }
 
 .sidebar-footer {
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border-color);
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* Main Content Layout */
@@ -79,10 +93,11 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background-color: var(--bg-surface);
 }
 
 .app-header {
-  height: 64px;
+  height: 60px;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
   padding: 0 1.5rem;
@@ -92,6 +107,19 @@
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+.header-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.header-date .icon {
+  color: var(--text-muted);
 }
 
 .header-user {
@@ -130,7 +158,7 @@
 }
 
 .app-content {
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
   flex-grow: 1;
   max-width: 1200px;
   width: 100%;
@@ -138,7 +166,7 @@
 }
 
 .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -147,13 +175,15 @@
 }
 
 .page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.018em;
   color: var(--text-main);
+  line-height: 1.3;
 }
 
 .page-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--text-muted);
   margin-top: 0.25rem;
 }
@@ -169,8 +199,8 @@
 }
 
 .card-title {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--text-main);
   margin-bottom: 1rem;
 }
@@ -195,13 +225,12 @@
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--border-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
   flex-shrink: 0;
 }
 
@@ -211,8 +240,8 @@
 .stat-icon.danger  { background-color: var(--danger-light);  color: var(--danger); }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.375rem;
+  font-weight: 700;
   color: var(--text-main);
   line-height: 1.2;
 }
@@ -250,8 +279,15 @@
 }
 
 .empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
 }
 
 .empty-state-title {
@@ -266,4 +302,448 @@
   color: var(--text-muted);
   max-width: 400px;
   margin: 0 auto 1.5rem auto;
+}
+
+/* ==========================================================================
+   DASHBOARD — TODAY-FOCUSED COMPONENTS
+   ========================================================================== */
+
+/* Page header action group */
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Generic card header row (title + trailing link) */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-head .card-title {
+  margin-bottom: 0;
+}
+
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.card-link:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* Today's progress hero */
+.progress-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.progress-card-head .card-title {
+  margin-bottom: 0;
+}
+
+.progress-count {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.card.is-complete .progress-count {
+  color: var(--success);
+}
+
+.progress-lg {
+  height: 14px;
+}
+
+.card.is-complete .progress-bar-fill {
+  background-color: var(--success);
+}
+
+.progress-note {
+  font-size: 0.84375rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* Today's habit checklist rows */
+.habit-today {
+  list-style: none;
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition);
+}
+
+.habit-row + .habit-row {
+  border-top: 1px solid var(--border-color);
+}
+
+.habit-row:hover {
+  background-color: var(--hover-overlay);
+}
+
+.habit-check {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  color: var(--primary);
+  transition: var(--transition);
+}
+
+.habit-check svg.icon {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.habit-check:hover {
+  border-color: var(--primary);
+  background-color: var(--primary-light);
+  text-decoration: none;
+}
+
+.habit-check:hover svg.icon {
+  opacity: 1;
+}
+
+.habit-check.is-checked {
+  border-color: var(--success);
+  background-color: var(--success);
+  color: #ffffff;
+}
+
+.habit-check.is-checked svg.icon {
+  opacity: 1;
+}
+
+.habit-check.is-checked:hover {
+  border-color: var(--danger);
+  background-color: var(--danger);
+}
+
+.habit-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-row-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.habit-row.is-completed .habit-row-name {
+  color: var(--text-muted);
+  font-weight: 500;
+  text-decoration: line-through;
+}
+
+.habit-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-top: 0.25rem;
+}
+
+.habit-meta-frequency {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.habit-extra {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+.btn-undo {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.btn-undo:hover {
+  color: var(--danger);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   CALENDAR — MONTHLY COMPLETION VIEW
+   ========================================================================== */
+
+.calendar-month {
+  text-align: center;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  margin-bottom: 1.25rem;
+}
+
+.calendar-table {
+  table-layout: fixed;
+}
+
+.calendar-table th {
+  width: 14.28%;
+  text-align: center;
+}
+
+.calendar-weekdays th {
+  font-size: 0.8125rem;
+}
+
+.calendar-table td.calendar-day {
+  height: 104px;
+  min-height: 96px;
+  vertical-align: top;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+}
+
+.calendar-table .calendar-day.is-empty {
+  background-color: var(--bg-main);
+}
+
+.calendar-table .calendar-day.is-today {
+  background-color: rgba(0, 117, 222, 0.06);
+}
+
+.calendar-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  margin-bottom: 0.375rem;
+}
+
+.calendar-day-number {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.calendar-day.is-today .calendar-day-number {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: #ffffff;
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+
+.calendar-day-count {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  white-space: nowrap;
+}
+
+.calendar-day-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.71875rem;
+  color: var(--success);
+  background-color: var(--success-light);
+  border-radius: 4px;
+  padding: 0.125rem 0.375rem;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+}
+
+.calendar-day-item .icon {
+  opacity: 0.8;
+}
+
+.calendar-day-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-day-more {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  padding-left: 0.125rem;
+}
+
+/* ==========================================================================
+   STATISTICS — INSIGHTS & RESTRAINED VISUALIZATIONS
+   ========================================================================== */
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.text-muted-note {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+/* Best performing habit highlight */
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.highlight-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.highlight-meta {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.highlight-count {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
+/* Period summary rows */
+.period-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.period-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.period-label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text-main);
+}
+
+.period-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+.period-value {
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.period-value.is-green {
+  color: var(--success);
+}
+
+.period-value.is-primary {
+  color: var(--primary);
+}
+
+/* Weekly activity bar chart */
+.weekly-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  height: 200px;
+  padding: 1.5rem 0.25rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.weekly-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.weekly-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-height: 1rem;
+  line-height: 1;
+}
+
+.weekly-bar {
+  width: 100%;
+  max-width: 40px;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.weekly-bar-fill {
+  width: 100%;
+  background-color: var(--primary);
+  border-radius: 6px;
+  transition: height 0.3s ease, background-color 0.3s ease;
+}
+
+.weekly-day {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }

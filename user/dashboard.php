@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/icons.php';
 
 require_user();
 
@@ -102,49 +103,96 @@ require_once __DIR__ . '/../includes/sidebar.php';
   <?php require_once __DIR__ . '/../includes/navbar.php'; ?>
 
   <div class="app-content">
-    
+
     <!-- Greeting & Quick Actions Bar -->
     <div class="page-header">
       <div>
-        <h1 class="page-title"><?= e($greeting) ?>, <?= e($userName) ?>! 👋</h1>
+        <h1 class="page-title"><?= e($greeting) ?>, <?= e($userName) ?>!</h1>
         <p class="page-subtitle">Here is your daily habit overview for <strong><?= date('l, F j, Y') ?></strong></p>
       </div>
-      <div style="display: flex; gap: 0.5rem;">
-        <a href="/habit_tracker/user/add-habit.php" class="btn btn-primary">➕ Add Habit</a>
-        <a href="/habit_tracker/user/calendar.php" class="btn btn-outline">📅 Calendar</a>
+      <div class="page-actions">
+        <a href="/habit_tracker/user/add-habit.php" class="btn btn-primary"><?= icon('plus') ?> Add Habit</a>
+        <a href="/habit_tracker/user/calendar.php" class="btn btn-outline"><?= icon('calendar') ?> Calendar</a>
       </div>
     </div>
 
     <?php display_flash_message(); ?>
 
-    <!-- Daily Progress Summary Card -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <h2 class="card-title" style="margin-bottom: 0;">Today's Progress</h2>
-        <span style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+    <!-- Daily Progress Summary -->
+    <section class="card<?= ($progressPercentage === 100 && $totalActiveCount > 0) ? ' is-complete' : '' ?>">
+      <div class="progress-card-head">
+        <h2 class="card-title">Today's Progress</h2>
+        <span class="progress-count">
           <?= $completedTodayCount ?> / <?= $totalActiveCount ?> Completed (<?= $progressPercentage ?>%)
         </span>
       </div>
 
-      <div class="progress-bar-container" style="height: 14px;">
+      <div class="progress-bar-container progress-lg">
         <div class="progress-bar-fill" style="width: <?= $progressPercentage ?>%;"></div>
       </div>
-      
-      <p style="font-size: 0.84375rem; color: var(--text-muted); margin-top: 0.5rem;">
+
+      <p class="progress-note">
         <?php if ($progressPercentage === 100 && $totalActiveCount > 0): ?>
-          🎉 Fantastic! You have completed all your habits for today!
+          Fantastic! You have completed all your habits for today.
         <?php elseif ($totalActiveCount === 0): ?>
           You don't have any active habits. Add a habit to get started.
         <?php else: ?>
           Keep going! Complete <?= $totalActiveCount - $completedTodayCount ?> more habit<?= ($totalActiveCount - $completedTodayCount) === 1 ? '' : 's' ?> today to hit 100%.
         <?php endif; ?>
       </p>
-    </div>
+    </section>
 
-    <!-- Stat Metrics Grid -->
+    <!-- Today's Habits Checklist -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title">Today's Habits</h2>
+        <a href="/habit_tracker/user/habits.php" class="card-link">Manage Habits <?= icon('arrow-right', 14) ?></a>
+      </div>
+
+      <?php if (empty($activeHabits)): ?>
+        <div class="empty-state">
+          <div class="empty-state-icon"><?= icon('target', 32) ?></div>
+          <h3 class="empty-state-title">No Active Habits Today</h3>
+          <p class="empty-state-desc">You don't have any active habits set up yet. Create your first habit to start building your streak!</p>
+          <a href="/habit_tracker/user/add-habit.php" class="btn btn-primary">Create Your First Habit</a>
+        </div>
+      <?php else: ?>
+        <ul class="habit-today">
+          <?php foreach ($activeHabits as $habit):
+            $isCompleted = in_array($habit['id'], $todayCompletedHabitIds);
+          ?>
+            <li class="habit-row<?= $isCompleted ? ' is-completed' : '' ?>">
+              <?php if ($isCompleted): ?>
+                <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="habit-check is-checked" title="Undo completion"><?= icon('check', 14) ?></a>
+              <?php else: ?>
+                <a href="/habit_tracker/actions/complete-habit.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="habit-check" title="Mark as complete"><?= icon('check', 14) ?></a>
+              <?php endif; ?>
+
+              <div class="habit-main">
+                <div class="habit-row-name"><?= e($habit['name']) ?></div>
+                <div class="habit-row-meta">
+                  <span class="badge badge-secondary"><?= e($habit['category_name']) ?></span>
+                  <span class="habit-meta-frequency">Frequency: <?= ucfirst(e($habit['frequency'])) ?></span>
+                </div>
+              </div>
+
+              <div class="habit-extra">
+                <?php if ($isCompleted): ?>
+                  <span class="badge badge-success"><?= icon('check', 12) ?> Completed</span>
+                  <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="btn-undo">Undo</a>
+                <?php endif; ?>
+              </div>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+
+    </section>
+
+    <!-- Streak & Secondary Statistics -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon warning">🔥</div>
+        <div class="stat-icon warning"><?= icon('flame', 20) ?></div>
         <div>
           <div class="stat-value"><?= $currentStreak ?> Day<?= $currentStreak === 1 ? '' : 's' ?></div>
           <div class="stat-label">Current Streak</div>
@@ -152,7 +200,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon success">🏆</div>
+        <div class="stat-icon success"><?= icon('trophy', 20) ?></div>
         <div>
           <div class="stat-value"><?= $longestStreak ?> Day<?= $longestStreak === 1 ? '' : 's' ?></div>
           <div class="stat-label">Longest Streak</div>
@@ -160,7 +208,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon primary">✅</div>
+        <div class="stat-icon primary"><?= icon('check-circle', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalAllTimeCompletions ?></div>
           <div class="stat-label">Total Completions</div>
@@ -168,66 +216,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon primary">🎯</div>
+        <div class="stat-icon primary"><?= icon('chart', 20) ?></div>
         <div>
-          <div class="stat-value"><?= $totalActiveCount ?></div>
-          <div class="stat-label">Active Habits</div>
+          <div class="stat-value"><?= $overallRate ?>%</div>
+          <div class="stat-label">Completion Rate</div>
         </div>
       </div>
-    </div>
-
-    <!-- Today's Habits Checklist -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-        <h2 class="card-title" style="margin-bottom: 0;">Today's Habits</h2>
-        <a href="/habit_tracker/user/habits.php" style="font-size: 0.875rem; font-weight: 600;">Manage Habits &rarr;</a>
-      </div>
-
-      <?php if (empty($activeHabits)): ?>
-        <div class="empty-state">
-          <div class="empty-state-icon">📝</div>
-          <h3 class="empty-state-title">No Active Habits Today</h3>
-          <p class="empty-state-desc">You don't have any active habits set up yet. Create your first habit to start building your streak!</p>
-          <a href="/habit_tracker/user/add-habit.php" class="btn btn-primary">Create Your First Habit</a>
-        </div>
-      <?php else: ?>
-        <div style="display: flex; flex-direction: column; gap: 0.875rem;">
-          <?php foreach ($activeHabits as $habit): 
-            $isCompleted = in_array($habit['id'], $todayCompletedHabitIds);
-          ?>
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background-color: var(--bg-surface); transition: var(--transition);">
-              
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="font-size: 1.5rem;">
-                  <?= $isCompleted ? '✅' : '⏳' ?>
-                </div>
-                <div>
-                  <div style="font-size: 1.05rem; font-weight: 700; color: <?= $isCompleted ? 'var(--text-muted)' : 'var(--text-main)' ?>; text-decoration: <?= $isCompleted ? 'line-through' : 'none' ?>;">
-                    <?= e($habit['name']) ?>
-                  </div>
-                  <div style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.125rem;">
-                    Category: <strong><?= e($habit['category_name']) ?></strong> &bull; Frequency: <?= ucfirst(e($habit['frequency'])) ?>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <?php if ($isCompleted): ?>
-                  <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="btn btn-success btn-sm btn-complete completed">
-                    ✓ Completed (Undo)
-                  </a>
-                <?php else: ?>
-                  <a href="/habit_tracker/actions/complete-habit.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="btn btn-outline btn-sm btn-complete">
-                    Mark Complete
-                  </a>
-                <?php endif; ?>
-              </div>
-
-            </div>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-
     </div>
 
   </div>

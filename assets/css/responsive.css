@@ -52,3 +52,57 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Calendar — keep usable on small screens (counts remain, name chips hide) */
+@media (max-width: 768px) {
+  .calendar-table td.calendar-day {
+    height: auto;
+    min-height: 60px;
+    padding: 0.375rem;
+  }
+
+  .calendar-day-item,
+  .calendar-day-more {
+    display: none;
+  }
+
+  .calendar-day-head {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-table td.calendar-day {
+    min-height: 48px;
+  }
+
+  .calendar-day-number {
+    font-size: 0.8125rem;
+  }
+
+  .calendar-day-count {
+    font-size: 0.625rem;
+  }
+}
+
+/* Statistics — stack insight columns on smaller screens */
+@media (max-width: 1024px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .weekly-chart {
+    height: 160px;
+    gap: 0.5rem;
+  }
+
+  .weekly-bar {
+    max-width: 28px;
+  }
+
+  .weekly-day {
+    font-size: 0.6875rem;
+  }
+}
