@@ -193,10 +193,17 @@ function calculate_streaks(array $completionDates): array {
 }
 
 /**
- * Check if a habit is marked complete on a specific date (Y-m-d)
+ * Check if a habit is fully completed on a specific date (Y-m-d)
+ * A habit counts as completed only when its count reached the daily target.
  */
 function is_habit_completed_on_date(PDO $pdo, int $habitId, string $dateStr): bool {
-    $stmt = $pdo->prepare("SELECT id FROM habit_completions WHERE habit_id = :habit_id AND completion_date = :completion_date LIMIT 1");
+    $stmt = $pdo->prepare("
+        SELECT hc.id
+        FROM habit_completions hc
+        JOIN habits h ON hc.habit_id = h.id
+        WHERE hc.habit_id = :habit_id AND hc.completion_date = :completion_date AND hc.count >= h.target
+        LIMIT 1
+    ");
     $stmt->execute([
         'habit_id'        => $habitId,
         'completion_date' => $dateStr
@@ -205,10 +212,16 @@ function is_habit_completed_on_date(PDO $pdo, int $habitId, string $dateStr): bo
 }
 
 /**
- * Get all completion dates for a habit as an array of YYYY-MM-DD strings
+ * Get all dates (Y-m-d) on which a habit was fully completed (count reached the daily target)
  */
 function get_habit_completion_dates(PDO $pdo, int $habitId): array {
-    $stmt = $pdo->prepare("SELECT completion_date FROM habit_completions WHERE habit_id = :habit_id ORDER BY completion_date DESC");
+    $stmt = $pdo->prepare("
+        SELECT hc.completion_date
+        FROM habit_completions hc
+        JOIN habits h ON hc.habit_id = h.id
+        WHERE hc.habit_id = :habit_id AND hc.count >= h.target
+        ORDER BY hc.completion_date DESC
+    ");
     $stmt->execute(['habit_id' => $habitId]);
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }

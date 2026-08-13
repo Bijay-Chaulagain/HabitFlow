@@ -27,15 +27,23 @@ if ($habitId <= 0) {
 try {
     $pdo = getDBConnection();
 
-    // STRICT OWNERSHIP CHECK: Ensure habit exists and belongs to current logged-in user
-    if (!verify_habit_ownership($pdo, $habitId, $userId)) {
+    // STRICT OWNERSHIP CHECK + fetch the habit name
+    $habitStmt = $pdo->prepare("SELECT id, name FROM habits WHERE id = :habit_id AND user_id = :user_id LIMIT 1");
+    $habitStmt->execute([
+        'habit_id' => $habitId,
+        'user_id'  => $userId
+    ]);
+    $habit = $habitStmt->fetch();
+
+    if (!$habit) {
         set_flash_message('error', 'You are not authorized to modify this habit.');
         redirect($redirectTo);
     }
 
-    // Delete completion log for date
+    // Decrement the per-day repetition count by one
     $stmt = $pdo->prepare("
-        DELETE FROM habit_completions 
+        UPDATE habit_completions
+        SET count = count - 1
         WHERE habit_id = :habit_id AND completion_date = :completion_date
     ");
 
@@ -44,7 +52,18 @@ try {
         'completion_date' => $completionDate
     ]);
 
-    set_flash_message('info', 'Completion undone for ' . format_date($completionDate) . '.');
+    // Remove the row entirely once count reaches zero (count never goes negative)
+    $stmt = $pdo->prepare("
+        DELETE FROM habit_completions
+        WHERE habit_id = :habit_id AND completion_date = :completion_date AND count <= 0
+    ");
+
+    $stmt->execute([
+        'habit_id'        => $habitId,
+        'completion_date' => $completionDate
+    ]);
+
+    set_flash_message('info', 'Undid one repetition for ' . $habit['name'] . ' on ' . format_date($completionDate) . '.');
     redirect($redirectTo);
 
 } catch (PDOException $e) {

@@ -50,7 +50,7 @@ $monthEndDate   = date('Y-m-t', $firstDayTimestamp);
 
 // Fetch all completion records for user in this month
 $stmt = $pdo->prepare("
-    SELECT hc.completion_date, h.id AS habit_id, h.name AS habit_name, c.name AS category_name
+    SELECT hc.completion_date, hc.count AS completion_count, h.target AS habit_target, h.id AS habit_id, h.name AS habit_name, c.name AS category_name
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
     JOIN categories c ON h.category_id = c.id
@@ -140,6 +140,18 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         $dateStr = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $dayCounter);
                         $isToday = ($dateStr === $todayStr);
                         $dayCompletions = $completionsByDate[$dateStr] ?? [];
+
+                        // Target-aware day classification:
+                        //   count >= target = fully completed; 0 < count < target = partial; no row = incomplete.
+                        $dayFullyCompleted = 0;
+                        $dayPartially = 0;
+                        foreach ($dayCompletions as $h) {
+                            if ((int)$h['completion_count'] >= max(1, (int)$h['habit_target'])) {
+                                $dayFullyCompleted++;
+                            } else {
+                                $dayPartially++;
+                            }
+                        }
                         $count = count($dayCompletions);
 
                         $cellClass = 'calendar-day js-calendar-day'
@@ -150,19 +162,23 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
                         echo '<div class="calendar-day-head">';
                         echo '<span class="calendar-day-number">' . $dayCounter . '</span>';
-                        if ($count > 0) {
-                            echo '<span class="badge badge-success calendar-day-count">' . $count . ' Done</span>';
+                        if ($dayFullyCompleted > 0) {
+                            echo '<span class="badge badge-success calendar-day-count">' . $dayFullyCompleted . ' Done</span>';
+                        } elseif ($dayPartially > 0) {
+                            echo '<span class="badge badge-warning calendar-day-count">' . $dayPartially . ' Partial</span>';
                         }
                         echo '</div>';
 
-                        // Small indicator chips for completed habits
+                        // Small indicator chips for habit completions (partial vs fully completed)
                         if ($count > 0) {
                             $shown = 0;
                             foreach ($dayCompletions as $h) {
                                 if ($shown < 2) {
-                                    echo '<div class="calendar-day-item">'
+                                    $isFull = (int)$h['completion_count'] >= max(1, (int)$h['habit_target']);
+                                    $stateClass = $isFull ? '' : ' is-partial';
+                                    echo '<div class="calendar-day-item' . $stateClass . '">'
                                         . icon('check', 10)
-                                        . '<span class="calendar-day-name">' . e($h['habit_name']) . '</span>'
+                                        . '<span class="calendar-day-name">' . e($h['habit_name']) . ' ' . (int)$h['completion_count'] . '/' . (int)$h['habit_target'] . '</span>'
                                         . '</div>';
                                 }
                                 $shown++;

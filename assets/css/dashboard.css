@@ -588,6 +588,11 @@
   opacity: 0.8;
 }
 
+.calendar-day-item.is-partial {
+  background-color: var(--warning-light);
+  color: var(--warning);
+}
+
 .calendar-day-name {
   flex: 1;
   min-width: 0;

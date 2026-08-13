@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS `habit_completions` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `habit_id` INT NOT NULL,
   `completion_date` DATE NOT NULL,
+  `count` INT NOT NULL DEFAULT 1,
   `completed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`habit_id`) REFERENCES `habits`(`id`) ON DELETE CASCADE,
   UNIQUE KEY `unique_habit_completion_date` (`habit_id`, `completion_date`),

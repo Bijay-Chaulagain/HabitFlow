@@ -27,9 +27,9 @@ $habitsStmt = $pdo->prepare("
 $habitsStmt->execute(['user_id' => $userId]);
 $activeHabits = $habitsStmt->fetchAll();
 
-// 2. Fetch today's completion records for logged-in user
+// 2. Fetch today's completion counts (habit_id + count) for logged-in user
 $todayCompletionsStmt = $pdo->prepare("
-    SELECT hc.habit_id
+    SELECT hc.habit_id, hc.count
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
     WHERE h.user_id = :user_id AND hc.completion_date = :completion_date AND h.status = 'active'
@@ -38,30 +38,55 @@ $todayCompletionsStmt->execute([
     'user_id'         => $userId,
     'completion_date' => $today
 ]);
-$todayCompletedHabitIds = $todayCompletionsStmt->fetchAll(PDO::FETCH_COLUMN);
+$todayCounts = [];
+foreach ($todayCompletionsStmt->fetchAll() as $row) {
+    $todayCounts[(int)$row['habit_id']] = (int)$row['count'];
+}
 
-// Calculate Daily Progress Metrics
+// Calculate Daily Progress Metrics (target-aware)
+// Fraction for each active habit = min(count / target, 1); overall = average of fractions.
 $totalActiveCount = count($activeHabits);
-$completedTodayCount = count($todayCompletedHabitIds);
-$progressPercentage = $totalActiveCount > 0 ? round(($completedTodayCount / $totalActiveCount) * 100) : 0;
+$totalProgressFraction = 0;
+$fullyCompletedTodayCount = 0;
+foreach ($activeHabits as $habit) {
+    $habitTarget = max(1, (int)$habit['target']);
+    $habitCount  = $todayCounts[$habit['id']] ?? 0;
+    $totalProgressFraction += min($habitCount / $habitTarget, 1);
+    if ($habitCount >= $habitTarget) {
+        $fullyCompletedTodayCount++;
+    }
+}
+$progressPercentage = $totalActiveCount > 0 ? (int)round(($totalProgressFraction / $totalActiveCount) * 100) : 0;
+$remainingHabitsCount = $totalActiveCount - $fullyCompletedTodayCount;
 
 // 3. Calculate Overall All-Time Stats for User
-// Total all-time completions for user
-$totalCompletionsStmt = $pdo->prepare("
-    SELECT COUNT(hc.id)
+// Total all-time repetitions (sum of per-day counts) for user
+$totalRepetitionsStmt = $pdo->prepare("
+    SELECT COALESCE(SUM(hc.count), 0)
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
     WHERE h.user_id = :user_id
 ");
-$totalCompletionsStmt->execute(['user_id' => $userId]);
-$totalAllTimeCompletions = (int)$totalCompletionsStmt->fetchColumn();
+$totalRepetitionsStmt->execute(['user_id' => $userId]);
+$totalAllTimeRepetitions = (int)$totalRepetitionsStmt->fetchColumn();
+
+// Total all-time fully completed habit-days (count reached the daily target)
+$fullyCompletedDaysStmt = $pdo->prepare("
+    SELECT COUNT(*)
+    FROM habit_completions hc
+    JOIN habits h ON hc.habit_id = h.id
+    WHERE h.user_id = :user_id AND hc.count >= h.target
+");
+$fullyCompletedDaysStmt->execute(['user_id' => $userId]);
+$fullyCompletedHabitDays = (int)$fullyCompletedDaysStmt->fetchColumn();
 
 // Fetch all completion dates across all user habits to calculate overall user streak
+// A day only counts once at least one habit was fully completed that day (count >= target)
 $allCompletionsStmt = $pdo->prepare("
     SELECT DISTINCT hc.completion_date
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
-    WHERE h.user_id = :user_id AND h.status = 'active'
+    WHERE h.user_id = :user_id AND h.status = 'active' AND hc.count >= h.target
     ORDER BY hc.completion_date DESC
 ");
 $allCompletionsStmt->execute(['user_id' => $userId]);
@@ -80,8 +105,8 @@ $earliestStartDate = $startDateStmt->fetchColumn();
 $overallRate = 0;
 if ($earliestStartDate && $totalActiveCount > 0) {
     $daysDiff = max(1, (int)(new DateTime($today))->diff(new DateTime($earliestStartDate))->format('%a') + 1);
-    $possibleCompletions = $daysDiff * $totalActiveCount;
-    $overallRate = min(100, round(($totalAllTimeCompletions / $possibleCompletions) * 100));
+    $possibleHabitDays = $daysDiff * $totalActiveCount;
+    $overallRate = min(100, round(($fullyCompletedHabitDays / $possibleHabitDays) * 100));
 }
 
 // Determine Greeting based on hour of day
@@ -123,7 +148,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <div class="progress-card-head">
         <h2 class="card-title">Today's Progress</h2>
         <span class="progress-count">
-          <?= $completedTodayCount ?> / <?= $totalActiveCount ?> Completed (<?= $progressPercentage ?>%)
+          <?= $fullyCompletedTodayCount ?> / <?= $totalActiveCount ?> fully completed (<?= $progressPercentage ?>%)
         </span>
       </div>
 
@@ -137,7 +162,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <?php elseif ($totalActiveCount === 0): ?>
           You don't have any active habits. Add a habit to get started.
         <?php else: ?>
-          Keep going! Complete <?= $totalActiveCount - $completedTodayCount ?> more habit<?= ($totalActiveCount - $completedTodayCount) === 1 ? '' : 's' ?> today to hit 100%.
+          Keep going! Fully complete <?= $remainingHabitsCount ?> more habit<?= $remainingHabitsCount === 1 ? '' : 's' ?> today to hit 100%.
         <?php endif; ?>
       </p>
     </section>
@@ -159,13 +184,16 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <?php else: ?>
         <ul class="habit-today">
           <?php foreach ($activeHabits as $habit):
-            $isCompleted = in_array($habit['id'], $todayCompletedHabitIds);
+            $habitTarget = max(1, (int)$habit['target']);
+            $habitCount  = $todayCounts[$habit['id']] ?? 0;
+            $isFullyCompleted = $habitCount >= $habitTarget;
+            $isPartiallyCompleted = $habitCount > 0 && !$isFullyCompleted;
           ?>
-            <li class="habit-row<?= $isCompleted ? ' is-completed' : '' ?>">
-              <?php if ($isCompleted): ?>
-                <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="habit-check is-checked" title="Undo completion"><?= icon('check', 14) ?></a>
+            <li class="habit-row<?= $isFullyCompleted ? ' is-completed' : '' ?>">
+              <?php if ($isFullyCompleted): ?>
+                <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="habit-check is-checked" title="Undo one completion"><?= icon('check', 14) ?></a>
               <?php else: ?>
-                <a href="/habit_tracker/actions/complete-habit.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="habit-check" title="Mark as complete"><?= icon('check', 14) ?></a>
+                <a href="/habit_tracker/actions/complete-habit.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="habit-check" title="Log one completion"><?= icon('check', 14) ?></a>
               <?php endif; ?>
 
               <div class="habit-main">
@@ -173,13 +201,17 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <div class="habit-row-meta">
                   <span class="badge badge-secondary"><?= e($habit['category_name']) ?></span>
                   <span class="habit-meta-frequency">Frequency: <?= ucfirst(e($habit['frequency'])) ?></span>
+                  <span class="badge <?= $isFullyCompleted ? 'badge-success' : ($isPartiallyCompleted ? 'badge-warning' : 'badge-secondary') ?>" title="Today's progress"><?= $habitCount ?>/<?= $habitTarget ?></span>
                 </div>
               </div>
 
               <div class="habit-extra">
-                <?php if ($isCompleted): ?>
+                <?php if ($isFullyCompleted): ?>
                   <span class="badge badge-success"><?= icon('check', 12) ?> Completed</span>
-                  <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="btn-undo">Undo</a>
+                  <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="btn-undo" title="Undo one completion">Undo</a>
+                <?php elseif ($isPartiallyCompleted): ?>
+                  <span class="badge badge-warning">Partially completed</span>
+                  <a href="/habit_tracker/actions/undo-completion.php?habit_id=<?= $habit['id'] ?>&redirect=/habit_tracker/user/dashboard.php" class="btn-undo" title="Undo one completion">Undo</a>
                 <?php endif; ?>
               </div>
             </li>
@@ -210,8 +242,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <div class="stat-card">
         <div class="stat-icon primary"><?= icon('check-circle', 20) ?></div>
         <div>
-          <div class="stat-value"><?= $totalAllTimeCompletions ?></div>
-          <div class="stat-label">Total Completions</div>
+          <div class="stat-value"><?= $totalAllTimeRepetitions ?></div>
+          <div class="stat-label">Total Repetitions</div>
         </div>
       </div>
 

@@ -16,21 +16,33 @@ $pdo = getDBConnection();
 $today = get_today_date();
 
 // 1. Core Summary Counts
+// Total repetitions (sum of per-day counts) across all habits
 $stmtCompletions = $pdo->prepare("
-    SELECT COUNT(hc.id)
+    SELECT COALESCE(SUM(hc.count), 0)
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
     WHERE h.user_id = :user_id
 ");
 $stmtCompletions->execute(['user_id' => $userId]);
-$totalCompletions = (int)$stmtCompletions->fetchColumn();
+$totalRepetitions = (int)$stmtCompletions->fetchColumn();
+
+// Total fully completed habit-days (count reached the daily target)
+$stmtFullyCompletedDays = $pdo->prepare("
+    SELECT COUNT(*)
+    FROM habit_completions hc
+    JOIN habits h ON hc.habit_id = h.id
+    WHERE h.user_id = :user_id AND hc.count >= h.target
+");
+$stmtFullyCompletedDays->execute(['user_id' => $userId]);
+$fullyCompletedHabitDays = (int)$stmtFullyCompletedDays->fetchColumn();
 
 // 2. Streaks Calculation
+// User-level streak: a day counts only when at least one habit was fully completed (count >= target)
 $stmtDates = $pdo->prepare("
     SELECT DISTINCT hc.completion_date
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
-    WHERE h.user_id = :user_id
+    WHERE h.user_id = :user_id AND hc.count >= h.target
     ORDER BY hc.completion_date DESC
 ");
 $stmtDates->execute(['user_id' => $userId]);
@@ -40,7 +52,7 @@ $streaks = calculate_streaks($allCompletionDates);
 $currentStreak = $streaks['current_streak'];
 $longestStreak = $streaks['longest_streak'];
 
-// 3. Completion Rate: share of the last 30 days with at least one completion
+// 3. Completion Rate: share of the last 30 days with at least one fully completed habit
 $completionRate = 0;
 if (!empty($allCompletionDates)) {
     $monthStart = date('Y-m-d', strtotime('-29 days'));
@@ -54,14 +66,14 @@ if (!empty($allCompletionDates)) {
     $completionRate = (int)round(($daysActive / 30) * 100);
 }
 
-// 4. Last 7 Days (Weekly) Breakdown
+// 4. Last 7 Days (Weekly) Breakdown — number of habits fully completed per day
 $weeklyData = [];
 for ($i = 6; $i >= 0; $i--) {
     $dateKey = date('Y-m-d', strtotime("-$i days"));
     $dateLabel = date('D (M j)', strtotime("-$i days"));
     
     $stmtDay = $pdo->prepare("
-        SELECT COUNT(hc.id)
+        SELECT COALESCE(SUM(CASE WHEN hc.count >= h.target THEN 1 ELSE 0 END), 0)
         FROM habit_completions hc
         JOIN habits h ON hc.habit_id = h.id
         WHERE h.user_id = :user_id AND hc.completion_date = :cdate
@@ -78,39 +90,43 @@ for ($i = 6; $i >= 0; $i--) {
 
 $last7DaysTotal = array_sum(array_column($weeklyData, 'count'));
 
-// 5. Last 30 Days (Monthly) Total
+// 5. Last 30 Days (Monthly) Total — fully completed habit-days
 $stmtMonth = $pdo->prepare("
-    SELECT COUNT(hc.id)
+    SELECT COUNT(*)
     FROM habit_completions hc
     JOIN habits h ON hc.habit_id = h.id
-    WHERE h.user_id = :user_id AND hc.completion_date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+    WHERE h.user_id = :user_id AND hc.completion_date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND hc.count >= h.target
 ");
 $stmtMonth->execute(['user_id' => $userId]);
 $last30DaysTotal = (int)$stmtMonth->fetchColumn();
 
-// 6. Best-Performing Habit
+// 6. Best-Performing Habit (ranked by fully completed habit-days)
 $stmtBest = $pdo->prepare("
-    SELECT h.id, h.name, c.name AS category_name, COUNT(hc.id) AS completion_count
+    SELECT h.id, h.name, h.target, c.name AS category_name,
+           COALESCE(SUM(hc.count), 0) AS repetitions,
+           COALESCE(SUM(CASE WHEN hc.count >= h.target THEN 1 ELSE 0 END), 0) AS completed_days
     FROM habits h
     JOIN categories c ON h.category_id = c.id
     LEFT JOIN habit_completions hc ON h.id = hc.habit_id
     WHERE h.user_id = :user_id
     GROUP BY h.id
-    ORDER BY completion_count DESC, h.created_at ASC
+    ORDER BY completed_days DESC, h.created_at ASC
     LIMIT 1
 ");
 $stmtBest->execute(['user_id' => $userId]);
 $bestHabit = $stmtBest->fetch();
 
-// 7. Habit Completion Breakdown List
+// 7. Habit Completion Breakdown List — distinguishes repetitions from fully completed habit-days
 $stmtHabitBreakdown = $pdo->prepare("
-    SELECT h.id, h.name, h.frequency, c.name AS category_name, COUNT(hc.id) AS completion_count
+    SELECT h.id, h.name, h.frequency, h.target, c.name AS category_name,
+           COALESCE(SUM(hc.count), 0) AS repetitions,
+           COALESCE(SUM(CASE WHEN hc.count >= h.target THEN 1 ELSE 0 END), 0) AS completed_days
     FROM habits h
     JOIN categories c ON h.category_id = c.id
     LEFT JOIN habit_completions hc ON h.id = hc.habit_id
     WHERE h.user_id = :user_id AND h.status != 'archived'
     GROUP BY h.id
-    ORDER BY completion_count DESC
+    ORDER BY completed_days DESC, repetitions DESC
 ");
 $stmtHabitBreakdown->execute(['user_id' => $userId]);
 $habitBreakdownList = $stmtHabitBreakdown->fetchAll();
@@ -154,8 +170,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <div class="stat-card">
         <div class="stat-icon primary"><?= icon('check-circle', 20) ?></div>
         <div>
-          <div class="stat-value"><?= $totalCompletions ?></div>
-          <div class="stat-label">Total Completions</div>
+          <div class="stat-value"><?= $totalRepetitions ?></div>
+          <div class="stat-label">Total Repetitions</div>
         </div>
       </div>
 
@@ -174,13 +190,13 @@ require_once __DIR__ . '/../includes/sidebar.php';
       <!-- Best Performing Habit -->
       <section class="card">
         <h2 class="card-title">Best Performing Habit</h2>
-        <?php if ($bestHabit && $bestHabit['completion_count'] > 0): ?>
+        <?php if ($bestHabit && $bestHabit['completed_days'] > 0): ?>
           <div class="highlight-item">
             <div class="stat-icon success"><?= icon('trophy', 20) ?></div>
             <div>
               <div class="highlight-name"><?= e($bestHabit['name']) ?></div>
               <div class="highlight-meta">Category: <strong><?= e($bestHabit['category_name']) ?></strong></div>
-              <div class="highlight-count"><?= icon('check', 14) ?> <?= (int)$bestHabit['completion_count'] ?> Total Completion<?= (int)$bestHabit['completion_count'] === 1 ? '' : 's' ?></div>
+              <div class="highlight-count"><?= icon('check', 14) ?> <?= (int)$bestHabit['completed_days'] ?> Fully Completed Day<?= (int)$bestHabit['completed_days'] === 1 ? '' : 's' ?> &middot; <?= (int)$bestHabit['repetitions'] ?> Repetition<?= (int)$bestHabit['repetitions'] === 1 ? '' : 's' ?></div>
             </div>
           </div>
         <?php else: ?>
@@ -195,7 +211,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
           <div class="period-row">
             <div class="period-info">
               <div class="period-label">Last 7 Days</div>
-              <div class="period-sub">Weekly completions</div>
+              <div class="period-sub">Fully completed habit-days</div>
             </div>
             <div class="period-value is-green"><?= $last7DaysTotal ?></div>
           </div>
@@ -203,7 +219,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
           <div class="period-row">
             <div class="period-info">
               <div class="period-label">Last 30 Days</div>
-              <div class="period-sub">Monthly completions</div>
+              <div class="period-sub">Fully completed habit-days</div>
             </div>
             <div class="period-value is-primary"><?= $last30DaysTotal ?></div>
           </div>
@@ -249,7 +265,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <th>Habit Name</th>
                 <th>Category</th>
                 <th>Frequency</th>
-                <th>Total Completions</th>
+                <th>Target</th>
+                <th>Repetitions</th>
+                <th>Fully Completed Days</th>
               </tr>
             </thead>
             <tbody>
@@ -258,7 +276,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
                   <td><strong><?= e($h['name']) ?></strong></td>
                   <td><span class="badge badge-primary"><?= e($h['category_name']) ?></span></td>
                   <td><?= ucfirst(e($h['frequency'])) ?></td>
-                  <td><strong><?= (int)$h['completion_count'] ?></strong> completion<?= (int)$h['completion_count'] === 1 ? '' : 's' ?></td>
+                  <td><?= (int)$h['target'] ?>x</td>
+                  <td><strong><?= (int)$h['repetitions'] ?></strong> repetition<?= (int)$h['repetitions'] === 1 ? '' : 's' ?></td>
+                  <td><strong><?= (int)$h['completed_days'] ?></strong> day<?= (int)$h['completed_days'] === 1 ? '' : 's' ?></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>

@@ -28,25 +28,48 @@ if ($habitId <= 0) {
 try {
     $pdo = getDBConnection();
 
-    // STRICT OWNERSHIP CHECK: Ensure habit exists and belongs to current logged-in user
-    if (!verify_habit_ownership($pdo, $habitId, $userId)) {
+    // STRICT OWNERSHIP CHECK + fetch the habit target and name
+    $habitStmt = $pdo->prepare("SELECT id, name, target FROM habits WHERE id = :habit_id AND user_id = :user_id LIMIT 1");
+    $habitStmt->execute([
+        'habit_id' => $habitId,
+        'user_id'  => $userId
+    ]);
+    $habit = $habitStmt->fetch();
+
+    if (!$habit) {
         set_flash_message('error', 'You are not authorized to modify this habit.');
         redirect($redirectTo);
     }
 
-    // Insert completion log (UNIQUE key habit_id + completion_date prevents duplicates)
+    $target = max(1, (int)$habit['target']);
+
+    // Increment the per-day repetition count, capped at the daily target.
+    // First completion of the day inserts a row with count = 1; later ones increment.
     $stmt = $pdo->prepare("
-        INSERT INTO habit_completions (habit_id, completion_date)
-        VALUES (:habit_id, :completion_date)
-        ON DUPLICATE KEY UPDATE id = id
+        INSERT INTO habit_completions (habit_id, completion_date, count)
+        VALUES (:habit_id, :completion_date, 1)
+        ON DUPLICATE KEY UPDATE count = LEAST(:target, count + 1)
     ");
 
     $stmt->execute([
         'habit_id'        => $habitId,
-        'completion_date' => $completionDate
+        'completion_date' => $completionDate,
+        'target'          => $target
     ]);
 
-    set_flash_message('success', 'Habit marked as complete! Great job!');
+    // Read back the new count to report accurate progress
+    $progressStmt = $pdo->prepare("SELECT count FROM habit_completions WHERE habit_id = :habit_id AND completion_date = :completion_date LIMIT 1");
+    $progressStmt->execute([
+        'habit_id'        => $habitId,
+        'completion_date' => $completionDate
+    ]);
+    $currentCount = (int)$progressStmt->fetchColumn();
+
+    if ($currentCount >= $target) {
+        set_flash_message('success', $habit['name'] . ' fully completed today (' . $currentCount . '/' . $target . ')! Great job!');
+    } else {
+        set_flash_message('success', $habit['name'] . ' progress logged (' . $currentCount . '/' . $target . '). Keep going!');
+    }
     redirect($redirectTo);
 
 } catch (PDOException $e) {
