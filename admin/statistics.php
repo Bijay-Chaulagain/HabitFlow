@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/icons.php';
 
 require_admin();
 
@@ -52,7 +53,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
     <!-- High-level Summary Metrics -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon primary">👥</div>
+        <div class="stat-icon primary"><?= icon('users', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalUsers ?></div>
           <div class="stat-label">Total Users (<?= $activeUsers ?> Active)</div>
@@ -60,7 +61,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon warning">🎯</div>
+        <div class="stat-icon warning"><?= icon('target', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalHabits ?></div>
           <div class="stat-label">Total System Habits</div>
@@ -68,7 +69,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon success">✅</div>
+        <div class="stat-icon success"><?= icon('check-circle', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalCompletions ?></div>
           <div class="stat-label">All-Time Completions</div>
@@ -76,7 +77,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon danger">🛑</div>
+        <div class="stat-icon danger"><?= icon('user', 20) ?></div>
         <div>
           <div class="stat-value"><?= $inactiveUsers ?></div>
           <div class="stat-label">Inactive / Deactivated Users</div>
@@ -88,20 +89,20 @@ require_once __DIR__ . '/../includes/sidebar.php';
       
       <!-- Habit Status Breakdown -->
       <div class="card">
-        <h2 class="card-title">📊 Habit Status Distribution</h2>
+        <h2 class="card-title"><?= icon('chart', 16) ?> Habit Status Distribution</h2>
         <div style="display: flex; flex-direction: column; gap: 0.875rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">
-            <span>🟢 Active Habits</span>
+            <span><?= icon('check-circle', 16) ?> Active Habits</span>
             <span class="badge badge-success"><?= $activeHabits ?></span>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">
-            <span>🟡 Paused Habits</span>
+            <span><?= icon('clock', 16) ?> Paused Habits</span>
             <span class="badge badge-warning"><?= $pausedHabits ?></span>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">
-            <span>⚪ Archived Habits</span>
+            <span><?= icon('archive', 16) ?> Archived Habits</span>
             <span class="badge badge-secondary"><?= $archivedHabits ?></span>
           </div>
         </div>
@@ -109,7 +110,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
       <!-- Category Popularity Distribution -->
       <div class="card">
-        <h2 class="card-title">🏷️ Habits per Category</h2>
+        <h2 class="card-title"><?= icon('tags', 16) ?> Habits per Category</h2>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
           <?php foreach ($categoryStats as $cat): ?>
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.625rem 0.875rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">

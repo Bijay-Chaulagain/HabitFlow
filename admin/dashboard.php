@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/icons.php';
 
 require_admin();
 
@@ -49,8 +50,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <p class="page-subtitle">System metrics, user management, and overall platform activity.</p>
       </div>
       <div>
-        <a href="/habit_tracker/admin/categories.php" class="btn btn-primary">🏷️ Manage Categories</a>
-        <a href="/habit_tracker/admin/users.php" class="btn btn-outline">👥 Manage Users</a>
+        <a href="/habit_tracker/admin/categories.php" class="btn btn-primary"><?= icon('tags') ?> Manage Categories</a>
+        <a href="/habit_tracker/admin/users.php" class="btn btn-outline"><?= icon('users') ?> Manage Users</a>
       </div>
     </div>
 
@@ -59,7 +60,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
     <!-- System Metrics Grid -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon primary">👥</div>
+        <div class="stat-icon primary"><?= icon('users', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalUsers ?></div>
           <div class="stat-label">Total Users</div>
@@ -67,7 +68,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon success">🟢</div>
+        <div class="stat-icon success"><?= icon('user', 20) ?></div>
         <div>
           <div class="stat-value"><?= $activeUsers ?></div>
           <div class="stat-label">Active Users</div>
@@ -75,7 +76,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon warning">🎯</div>
+        <div class="stat-icon warning"><?= icon('target', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalHabits ?></div>
           <div class="stat-label">Total Habits</div>
@@ -83,7 +84,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon success">✅</div>
+        <div class="stat-icon success"><?= icon('check-circle', 20) ?></div>
         <div>
           <div class="stat-value"><?= $totalCompletions ?></div>
           <div class="stat-label">Total Completions</div>
@@ -128,7 +129,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
       <!-- Popular Categories Card -->
       <div class="card">
-        <h2 class="card-title">🏷️ Popular Categories</h2>
+        <h2 class="card-title"><?= icon('tags', 16) ?> Popular Categories</h2>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
           <?php foreach ($popularCategories as $cat): ?>
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.625rem 0.875rem; background-color: var(--bg-main); border-radius: var(--border-radius-sm);">
