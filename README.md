@@ -1,94 +1,276 @@
-# 🎯 Habit Tracker — Web Application
+# HabitFlow — Habit Tracking Web Application
 
-A complete, responsive, college-level **Habit Tracker Web Application** built with pure native web technologies.
+HabitFlow is a web-based habit tracking application that allows users to create and manage habits, track daily progress, monitor streaks, and analyze completion history.
 
-Track daily habits, build streaks, visualize progress on a monthly calendar, and manage your goals with a clean, modern UI.
+The application includes separate user and administrator functionality, with a focus on authentication, database relationships, CRUD operations, and a responsive user interface.
 
----
-
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Technology Stack](#-technology-stack)
-- [Requirements](#-requirements)
-- [Installation & Setup](#-installation--setup)
-- [Default URL](#-default-url)
-- [User Roles](#-user-roles)
-- [Default Admin Account](#-default-admin-account)
-- [Database Structure](#-database-structure)
-- [Folder Structure](#-folder-structure)
-- [Security Features](#-security-features)
+**Project Status:** Completed — Academic Project
 
 ---
 
-## ✨ Features
+## Features
 
 ### User Features
-- **User Registration & Login** — Secure authentication with password hashing (BCRYPT)
-- **Habit CRUD** — Create, view, edit, archive, and delete personal habits
-- **Daily Habit Completion** — Mark habits as complete and undo completions
-- **Streak Tracking** — Current streak and longest streak dynamically calculated from completion records
-- **Dashboard** — Daily progress bar, today's habit checklist, quick stats at a glance
-- **Statistics & Analytics** — Weekly/monthly breakdowns, best-performing habit, completion counts
-- **Monthly Calendar** — Visual month-by-month completion history with navigation
-- **Profile Management** — Edit full name and change password securely
-- **Dark / Light Mode** — Theme toggle persisted via localStorage
-- **Responsive Design** — Works on desktop, tablet, and mobile devices
+
+* User registration and login
+* Password hashing and secure authentication
+* Create, view, edit, archive, and delete habits
+* Daily habit completion tracking
+* Undo habit completions
+* Current and longest streak tracking
+* Dashboard with daily progress and habit statistics
+* Weekly and monthly statistics
+* Monthly completion calendar
+* Profile management
+* Password change functionality
+* Habit categories
+* Dark and light theme with persistent preference
+* Responsive design for desktop, tablet, and mobile
 
 ### Admin Features
-- **Admin Dashboard** — System metrics (total users, habits, completions), popular categories, recent signups
-- **User Management** — View all users, activate/deactivate accounts, delete users (with self-protection guard)
-- **Category CRUD** — Create, edit, and delete habit categories with foreign key safety
-- **System Habits Monitor** — View all habits across all users
-- **System Statistics** — Habit status distribution, category popularity
+
+* Admin dashboard with system-level metrics
+* User management
+* Activate and deactivate user accounts
+* Delete users with administrative safeguards
+* Category management
+* Create, edit, and delete habit categories
+* System-wide habit monitoring
+* System statistics
+* Category popularity and habit status statistics
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
-| Layer        | Technology              |
-|--------------|-------------------------|
-| Frontend     | HTML5, CSS3, Vanilla JavaScript (ES6+) |
-| Backend      | Vanilla PHP 8+          |
-| Database     | MySQL (MariaDB)         |
-| Server       | XAMPP Apache             |
+| Layer                   | Technology                             |
+| ----------------------- | -------------------------------------- |
+| Frontend                | HTML5, CSS3, Vanilla JavaScript (ES6+) |
+| Backend                 | PHP 8+                                 |
+| Database                | MySQL / MariaDB                        |
+| Web Server              | Apache                                 |
+| Development Environment | XAMPP                                  |
+| Database Management     | phpMyAdmin                             |
 
-**No frameworks, libraries, or third-party dependencies are used.**
-
----
-
-## 📦 Requirements
-
-- [XAMPP](https://www.apachefriends.org/) (Apache + MySQL + PHP 8.x)
-- A modern web browser (Chrome, Firefox, Edge, Safari)
+The application is built without frontend frameworks, backend frameworks, npm packages, or third-party libraries.
 
 ---
 
-## 🚀 Installation & Setup
+## Key Implementation Details
 
-### Step 1: Install XAMPP
-Download and install XAMPP from [https://www.apachefriends.org/](https://www.apachefriends.org/).
+* **Authentication:** PHP session-based authentication
+* **Password Security:** `password_hash()` and `password_verify()`
+* **Database Access:** PDO with prepared statements
+* **Authorization:** Server-side role-based access control
+* **Ownership Verification:** Users can only modify their own habits
+* **Input Validation:** Client-side and server-side validation
+* **XSS Protection:** Escaped HTML output using a reusable `e()` helper
+* **Streak Calculation:** Streaks are calculated from completion records rather than stored as fixed values
+* **Habit Archiving:** Habits can be archived instead of immediately being permanently removed
+* **Theme Persistence:** Dark/light mode preference is stored using browser `localStorage`
+* **Database Constraints:** Foreign keys and unique constraints maintain data integrity
 
-### Step 2: Start Apache and MySQL
-Open the XAMPP Control Panel and start both **Apache** and **MySQL** services.
+---
 
-### Step 3: Place the Project
-Copy the entire `habit_tracker` folder into your XAMPP web root:
+## Application Workflow
 
+```text
+Register / Login
+       ↓
+Create Habit
+       ↓
+Set Habit Details
+       ↓
+Track Daily Completion
+       ↓
+Build Streaks
+       ↓
+Review Statistics
+       ↓
+View Monthly Calendar
+       ↓
+Archive or Continue Habit
 ```
-C:\xampp\htdocs\habit_tracker\
+
+---
+
+## Database Structure
+
+**Database:** `habit_tracker`
+
+The application uses four primary tables:
+
+```text
+users
+   │
+   └──────< habits >────── categories
+               │
+               └──────< habit_completions
 ```
 
-### Step 4: Import the Database
-1. Open **phpMyAdmin** at [http://localhost/phpmyadmin/](http://localhost/phpmyadmin/).
-2. Click the **Import** tab.
-3. Select the file: `database/habit_tracker.sql`
-4. Click **Go** to import.
+### Tables
 
-This will create the `habit_tracker` database with all required tables, indexes, seed categories, and a default admin account.
+| Table               | Purpose                                         |
+| ------------------- | ----------------------------------------------- |
+| `users`             | Stores user accounts, roles, and account status |
+| `categories`        | Stores system-wide habit categories             |
+| `habits`            | Stores user-created habits and their metadata   |
+| `habit_completions` | Stores daily habit completion records           |
 
-### Step 5: Configure Database Connection (if needed)
-The database connection is configured in `config/database.php`:
+### Relationships
+
+* `users` → `habits`: One user can have multiple habits
+* `categories` → `habits`: Each habit belongs to a category
+* `habits` → `habit_completions`: Each habit can have multiple completion records
+* Foreign keys maintain referential integrity
+* Cascading deletes are used where appropriate
+* Category deletion is restricted when associated habits exist
+* `UNIQUE(habit_id, completion_date)` prevents duplicate completion records for the same habit and date
+
+### Design Decisions
+
+**Dynamic statistics**
+
+Streaks, completion counts, and completion rates are calculated from `habit_completions` rather than storing redundant statistics.
+
+**Client-side theme preference**
+
+Dark/light mode is stored in browser `localStorage`, so a separate settings table is not required.
+
+**Habit archiving**
+
+Habits can be archived by changing their status rather than immediately removing their historical data.
+
+---
+
+## Project Structure
+
+```text
+habit_tracker/
+│
+├── index.php
+├── login.php
+├── register.php
+├── logout.php
+├── README.md
+│
+├── config/
+│   └── database.php
+│
+├── includes/
+│   ├── header.php
+│   ├── footer.php
+│   ├── navbar.php
+│   ├── sidebar.php
+│   ├── auth.php
+│   └── functions.php
+│
+├── actions/
+│   ├── login.php
+│   ├── register.php
+│   ├── add-habit.php
+│   ├── update-habit.php
+│   ├── delete-habit.php
+│   ├── complete-habit.php
+│   ├── undo-completion.php
+│   ├── profile.php
+│   ├── password.php
+│   ├── user-actions.php
+│   └── category-actions.php
+│
+├── user/
+│   ├── dashboard.php
+│   ├── habits.php
+│   ├── add-habit.php
+│   ├── edit-habit.php
+│   ├── statistics.php
+│   ├── calendar.php
+│   └── profile.php
+│
+├── admin/
+│   ├── dashboard.php
+│   ├── users.php
+│   ├── habits.php
+│   ├── categories.php
+│   └── statistics.php
+│
+├── assets/
+│   ├── css/
+│   │   ├── style.css
+│   │   ├── auth.css
+│   │   ├── dashboard.css
+│   │   ├── habits.css
+│   │   ├── admin.css
+│   │   └── responsive.css
+│   │
+│   └── js/
+│       ├── validation.js
+│       ├── dashboard.js
+│       ├── habits.js
+│       ├── calendar.js
+│       ├── admin.js
+│       └── theme.js
+│
+└── database/
+    └── habit_tracker.sql
+```
+
+---
+
+## Requirements
+
+* XAMPP with Apache, MySQL, and PHP 8+
+* A modern web browser
+* phpMyAdmin for database import
+
+No additional dependency installation is required.
+
+---
+
+## Installation
+
+### 1. Clone the Repository
+
+Place the project inside the XAMPP `htdocs` directory:
+
+```text
+C:\xampp\htdocs\habit_tracker
+```
+
+### 2. Start XAMPP
+
+Open the XAMPP Control Panel and start:
+
+```text
+Apache
+MySQL
+```
+
+### 3. Create the Database
+
+Open phpMyAdmin:
+
+```text
+http://localhost/phpmyadmin/
+```
+
+Import the following SQL file:
+
+```text
+database/habit_tracker.sql
+```
+
+The SQL file contains the database schema and required seed data.
+
+### 4. Configure the Database
+
+Database configuration is located at:
+
+```text
+config/database.php
+```
+
+Example configuration:
 
 ```php
 define('DB_HOST', 'localhost');
@@ -97,173 +279,75 @@ define('DB_PASS', '');
 define('DB_NAME', 'habit_tracker');
 ```
 
-Update `DB_USER` and `DB_PASS` if your XAMPP MySQL uses different credentials.
+Update the credentials if your local MySQL configuration is different.
 
-### Step 6: Visit the Application
-Open your browser and navigate to:
+### 5. Run the Application
 
-```
+Open:
+
+```text
 http://localhost/habit_tracker/
 ```
 
 ---
 
-## 🌐 Default URL
+## User Roles
 
-```
-http://localhost/habit_tracker/
-```
+| Role  | Access                                                                    |
+| ----- | ------------------------------------------------------------------------- |
+| User  | Manage personal habits, completions, statistics, calendar, and profile    |
+| Admin | Manage users and categories and monitor system-wide habits and statistics |
 
----
-
-## 👥 User Roles
-
-| Role  | Description | Dashboard URL |
-|-------|-------------|---------------|
-| User  | Normal registered user who creates and tracks habits | `/user/dashboard.php` |
-| Admin | System administrator who manages users and categories | `/admin/dashboard.php` |
+The application performs role checks on the server before allowing access to protected functionality.
 
 ---
 
-## 🔑 Default Admin Account
+## Security
 
-| Field    | Value                        |
-|----------|------------------------------|
-| Username | `admin`                      |
-| Email    | `admin@habit-tracker.local`  |
-| Password | `admin123`                   |
+HabitFlow implements several standard web application security practices:
 
-> ⚠️ **Change the default admin password after first login.**
-
----
-
-## 🗄 Database Structure
-
-**Database Name:** `habit_tracker`
-
-### Tables
-
-| Table               | Purpose                                      |
-|---------------------|----------------------------------------------|
-| `users`             | User accounts, authentication, roles, status |
-| `categories`        | Habit categories (system-wide)               |
-| `habits`            | User-created habits with metadata            |
-| `habit_completions` | Daily completion logs per habit               |
-
-### Entity Relationships
-
-```
-USERS (1) ────< (N) HABITS (N) >──── (1) CATEGORIES
-                     │
-                     │ 1:N
-                     ▼
-              HABIT_COMPLETIONS
-```
-
-- `users` 1:N `habits` — One user can have many habits (`ON DELETE CASCADE`)
-- `categories` 1:N `habits` — Each habit belongs to one category (`ON DELETE RESTRICT`)
-- `habits` 1:N `habit_completions` — Each habit has many completion entries (`ON DELETE CASCADE`)
-- `UNIQUE(habit_id, completion_date)` prevents duplicate completions on the same day
-
-### Key Design Decisions
-- **No stored statistics** — Streaks, completion rates, and counts are calculated dynamically from `habit_completions`
-- **No `user_settings` table** — Dark mode preference uses JavaScript `localStorage`
-- **Soft-delete preferred** — Habits are archived (`status = 'archived'`) rather than permanently deleted
+| Security Area            | Implementation                                          |
+| ------------------------ | ------------------------------------------------------- |
+| Password Security        | `password_hash()` and `password_verify()`               |
+| SQL Injection Prevention | PDO prepared statements                                 |
+| XSS Prevention           | `htmlspecialchars()` through the `e()` helper           |
+| Session Security         | Session regeneration after login                        |
+| Authorization            | Server-side role checks                                 |
+| Resource Ownership       | Habit ownership verified before modifications           |
+| Account Protection       | Admin self-deactivation/deletion safeguards             |
+| Login Security           | Generic authentication error messages                   |
+| Input Validation         | Client-side validation backed by server-side validation |
 
 ---
 
-## 📁 Folder Structure
+## Academic Scope
 
-```
-habit_tracker/
-├── index.php                  # Public landing page
-├── login.php                  # Login page
-├── register.php               # Registration page
-├── logout.php                 # Session destruction
-├── README.md                  # This file
-│
-├── config/
-│   └── database.php           # PDO database connection
-│
-├── includes/
-│   ├── header.php             # HTML head & CSS imports
-│   ├── footer.php             # Footer & JS imports
-│   ├── navbar.php             # Top navigation header
-│   ├── sidebar.php            # Dashboard sidebar navigation
-│   ├── auth.php               # Authentication & authorization guards
-│   └── functions.php          # Validation, streak calc, flash messages
-│
-├── actions/
-│   ├── login.php              # Login processing
-│   ├── register.php           # Registration processing
-│   ├── add-habit.php          # Create habit
-│   ├── update-habit.php       # Update habit (ownership verified)
-│   ├── delete-habit.php       # Archive/delete habit
-│   ├── complete-habit.php     # Mark habit complete
-│   ├── undo-completion.php    # Remove completion record
-│   ├── profile.php            # Update profile name
-│   ├── password.php           # Change password
-│   ├── user-actions.php       # Admin: user management
-│   └── category-actions.php   # Admin: category CRUD
-│
-├── user/
-│   ├── dashboard.php          # User main dashboard
-│   ├── habits.php             # Habit management list
-│   ├── add-habit.php          # Add habit form
-│   ├── edit-habit.php         # Edit habit form
-│   ├── statistics.php         # Analytics & streaks
-│   ├── calendar.php           # Monthly completion calendar
-│   └── profile.php            # Profile & password settings
-│
-├── admin/
-│   ├── dashboard.php          # Admin overview dashboard
-│   ├── users.php              # User management
-│   ├── habits.php             # System habits monitor
-│   ├── categories.php         # Category CRUD
-│   └── statistics.php         # System analytics
-│
-├── assets/
-│   ├── css/
-│   │   ├── style.css          # Design system & base styles
-│   │   ├── auth.css           # Login/register page styles
-│   │   ├── dashboard.css      # Layout, cards, stat grids
-│   │   ├── habits.css         # Habit cards, tables, badges
-│   │   ├── admin.css          # Admin-specific styles
-│   │   └── responsive.css     # Mobile/tablet breakpoints
-│   └── js/
-│       ├── validation.js      # Client-side form validation
-│       ├── dashboard.js       # Dashboard interactions
-│       ├── habits.js          # Habit action confirmations
-│       ├── calendar.js        # Calendar day interactions
-│       ├── admin.js           # Admin confirmation dialogs
-│       └── theme.js           # Dark/light mode toggle
-│
-└── database/
-    └── habit_tracker.sql      # Full schema + seed data
-```
+HabitFlow was developed as an individual college project to demonstrate practical web development and database concepts.
+
+The project focuses on:
+
+* CRUD operations
+* Authentication and authorization
+* Relational database design
+* Session management
+* Data validation
+* Database constraints
+* User-specific data access
+* Administrative functionality
+* Responsive frontend development
+
+It intentionally does not attempt to provide production-scale features such as:
+
+* Social login
+* Mobile applications
+* Real-time synchronization
+* Third-party integrations
+* AI-powered recommendations
+* Cloud infrastructure
+* Distributed architecture
 
 ---
 
-## 🔒 Security Features
+## License
 
-| Feature | Implementation |
-|---------|---------------|
-| **Password Hashing** | `password_hash(PASSWORD_BCRYPT)` and `password_verify()` |
-| **SQL Injection Prevention** | PDO prepared statements on all queries |
-| **XSS Protection** | `htmlspecialchars()` via `e()` helper on all output |
-| **Session Authentication** | PHP sessions with `session_regenerate_id()` on login |
-| **Role-Based Authorization** | Server-side role checks on every protected page and action |
-| **Resource Ownership** | Habit operations verify `habit.user_id === session_user_id` |
-| **Admin Self-Protection** | Admins cannot deactivate or delete their own account |
-| **Generic Login Errors** | "Invalid username/email or password" prevents user enumeration |
-| **Client + Server Validation** | JavaScript validation for UX, PHP validation as authority |
-
----
-
-## 📄 License
-
-This project is a college-level academic demonstration built for educational purposes.
-
----
-
-**Built with ❤️ using HTML5 + CSS3 + Vanilla JavaScript + Vanilla PHP + MySQL**
+This project was developed for educational and academic purposes.
